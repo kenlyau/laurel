@@ -8,3 +8,11 @@
 
 http://www.jianshu.com/p/cc763dd2914e
 微信网页版登陆原理
+
+
+## todo
+- [] 扫描登录
+- [] 接收消息
+- [] 发送(文本)消息
+- [] 发送消息RESTful API
+- [] 接收消息web hook
