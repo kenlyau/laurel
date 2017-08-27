@@ -31,6 +31,7 @@ module.exports = class {
         r: Date.now()
       }
     })
+
     var window
     eval(response.data)
     switch (window.code) {
@@ -55,10 +56,12 @@ module.exports = class {
         break
       case 201:
         this.avatar = window.userAvatar
+        console.log('111111111')
         this.checkCode()
         break
       case 400:
-        return
+        tis.checkCode()
+        break
       default:
         this.checkCode()  
     }
