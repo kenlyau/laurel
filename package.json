@@ -1,0 +1,31 @@
+{
+  "name": "laurel",
+  "version": "0.0.1",
+  "description": "nodejs project",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kenlyau/laurel.git"
+  },
+  "keywords": [
+    "wechat",
+    "nodejs"
+  ],
+  "author": "ken",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kenlyau/laurel/issues"
+  },
+  "homepage": "https://github.com/kenlyau/laurel#readme",
+  "dependencies": {
+    "axios": "^0.16.2",
+    "body-parser": "^1.17.2",
+    "cookie-parser": "^1.4.3",
+    "express": "^4.15.4",
+    "morgan": "^1.8.2",
+    "tough-cookie": "^2.3.2"
+  }
+}
