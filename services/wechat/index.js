@@ -43,6 +43,7 @@ module.exports = class {
     
     switch (window.code) {
       case 200:
+        try{
         var authAddress = window.redirect_uri
         this.baseURL = authAddress.match(/^https:\/\/(.*?)\//)[0]
         var authResponse = await axios.get(authAddress, {
@@ -57,17 +58,23 @@ module.exports = class {
           wxsid: authResponse.data.match(/<wxsid>(.*?)<\/wxsid>/)[1],
           wxuin: authResponse.data.match(/<wxuin>(.*?)<\/wxuin>/)[1]
         }
+
         //setting cookies
         var cookie = new tough.Cookie([
           {key: 'wxuin', value: auth.wxuin},
           {key: 'wxsid', value: auth.wxsid}
         ])
         var cookiejar = new tough.CookieJar()
-        cookiejar.setCookie(cookie, this.baseURL)
-        axios.default.jar = cookiejar
-        axios.default.withCredentials = true
+        console.log('cookie ==>', cookie)
+        //cookiejar.setCookie(cookie, this.baseURL)
+        
+        axios.defaults.jar = cookiejar
+        axios.defaults.withCredentials = true
         this.auth = auth
         this.initUser()
+        }catch(e){
+          console.log(e)
+        }
         break
       case 201:
         this.avatar = window.userAvatar
@@ -91,7 +98,7 @@ module.exports = class {
                 Skey: this.auth.skey,
             }
         });
-        console.log(response)
+       
 
         await axios.post(`${this.baseURL}/cgi-bin/mmwebwx-bin/webwxstatusnotify?lang=en_US&pass_ticket=${this.auth.passTicket}`, {
             BaseRequest: {
