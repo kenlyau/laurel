@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/kenlyau/laurel#readme",
   "dependencies": {
+    "@3846masa/axios-cookiejar-support": "^0.1.1",
     "axios": "^0.16.2",
     "body-parser": "^1.17.2",
     "cookie-parser": "^1.4.3",

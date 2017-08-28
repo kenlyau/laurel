@@ -1,4 +1,8 @@
 const axios = require('axios')
+const tough = require('tough-cookie')
+const axiosCookieJarSupport = require('@3846masa/axios-cookiejar-support')
+
+axiosCookieJarSupport(axios)
 
 var instance = null
 module.exports = class {
@@ -19,25 +23,28 @@ module.exports = class {
     return code
   }
   async checkCode() {
+    var _this = this
     if (this.auth) {
       return
     }
-    var url = 'https://login.web.wechat.com/cgi-bin/mmwebwx-bin/login'
+    
+    var url = 'https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login'
     var response = await axios.get(url, {
       params: {
         loginicon: true,
-        uuid: this.code,
+        uuid: _this.code,
         tip: 0,
         r: Date.now()
       }
     })
-
-    var window
+    
+    var window = {}
     eval(response.data)
+    
     switch (window.code) {
       case 200:
         var authAddress = window.redirect_uri
-        axios.default.baseURL = authAddress.match(/^https:\/\/(.*?)\//)[0]
+        this.baseURL = authAddress.match(/^https:\/\/(.*?)\//)[0]
         var authResponse = await axios.get(authAddress, {
           params: {
             fun: 'new',
@@ -45,38 +52,48 @@ module.exports = class {
           }
         })
         var auth = {
-          baseURL: axios.default.baseURL,
           skey: authResponse.data.match(/<skey>(.*?)<\/skey>/)[1],
           passTicket: authResponse.data.match(/<pass_ticket>(.*?)<\/pass_ticket>/)[1],
           wxsid: authResponse.data.match(/<wxsid>(.*?)<\/wxsid>/)[1],
-          wxuin: authResponse.data.match(/<wxuin>(*.?)<\/wxuin>/)[1]
+          wxuin: authResponse.data.match(/<wxuin>(.*?)<\/wxuin>/)[1]
         }
+        //setting cookies
+        var cookie = new tough.Cookie([
+          {key: 'wxuin', value: auth.wxuin},
+          {key: 'wxsid', value: auth.wxsid}
+        ])
+        var cookiejar = new tough.CookieJar()
+        cookiejar.setCookie(cookie, this.baseURL)
+        axios.default.jar = cookiejar
+        axios.default.withCredentials = true
         this.auth = auth
         this.initUser()
         break
       case 201:
         this.avatar = window.userAvatar
-        console.log('111111111')
         this.checkCode()
         break
       case 400:
-        tis.checkCode()
+        this.checkCode()
         break
       default:
+       
         this.checkCode()  
     }
 
   }
   async initUser(){
-    var response = await axios.post(`/cgi-bin/mmwebwx-bin/webwxinit?r=${-new Date()}&pass_ticket=${self.auth.passTicket}`, {
+    console.log('initUser start -------')
+    var response = await axios.post(`${this.baseURL}/cgi-bin/mmwebwx-bin/webwxinit?r=${-new Date()}&pass_ticket=${this.auth.passTicket}`, {
             BaseRequest: {
                 Sid: this.auth.wxsid,
                 Uin: this.auth.wxuin,
                 Skey: this.auth.skey,
             }
         });
+        console.log(response)
 
-        await axios.post(`/cgi-bin/mmwebwx-bin/webwxstatusnotify?lang=en_US&pass_ticket=${self.auth.passTicket}`, {
+        await axios.post(`${this.baseURL}/cgi-bin/mmwebwx-bin/webwxstatusnotify?lang=en_US&pass_ticket=${this.auth.passTicket}`, {
             BaseRequest: {
                 Sid: this.auth.wxsid,
                 Uin: this.auth.wxuin,
