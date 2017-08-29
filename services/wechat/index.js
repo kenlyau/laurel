@@ -1,8 +1,6 @@
-const axios = require('axios')
 const tough = require('tough-cookie')
-const axiosCookieJarSupport = require('@3846masa/axios-cookiejar-support')
+const rp = require('request-promise')
 
-axiosCookieJarSupport(axios)
 
 var instance = null
 module.exports = class {
@@ -16,8 +14,8 @@ module.exports = class {
   }
   async getCode() {
     var url = 'https://login.wx.qq.com/jslogin?appid=wx782c26e4c19acffb&redirect_uri=https%3A%2F%2Fwx.qq.com%2Fcgi-bin%2Fmmwebwx-bin%2Fwebwxnewloginpage&fun=new&lang=en_US&_=' + Date.now()
-    var response = await axios.get(url)
-    var code = response.data.match(/[A-Za-z_\-\d]{10}==/)[0]
+    var response = await rp(url)
+    var code = response.match(/[A-Za-z_\-\d]{10}==/)[0]
     this.code = code
     this.checkCode()
     return code
@@ -29,7 +27,7 @@ module.exports = class {
     }
     
     var url = 'https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login'
-    var response = await axios.get(url, {
+    var response = (url, {
       params: {
         loginicon: true,
         uuid: _this.code,
@@ -46,6 +44,7 @@ module.exports = class {
         try{
         var authAddress = window.redirect_uri
         this.baseURL = authAddress.match(/^https:\/\/(.*?)\//)[0]
+        this.wxdomain = authAddress.match(/https:\/\/(.*?)\//)[1]
         var authResponse = await axios.get(authAddress, {
           params: {
             fun: 'new',
@@ -64,9 +63,10 @@ module.exports = class {
           {key: 'wxuin', value: auth.wxuin},
           {key: 'wxsid', value: auth.wxsid}
         ])
+        
         var cookiejar = new tough.CookieJar()
-        console.log('cookie ==>', cookie)
-        //cookiejar.setCookie(cookie, this.baseURL)
+       
+        cookiejar.setCookieSync(`wxuin=${auth.wxuin}; wxsid=${auth.wxsid}; domain=${this.wxdomain};`, this.baseURL)
         
         axios.defaults.jar = cookiejar
         axios.defaults.withCredentials = true
