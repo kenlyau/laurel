@@ -18,6 +18,7 @@ module.exports = class {
     var code = response.match(/[A-Za-z_\-\d]{10}==/)[0]
     this.code = code
     this.checkCode()
+
     return code
   }
   async checkCode() {
@@ -27,8 +28,8 @@ module.exports = class {
     }
     
     var url = 'https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login'
-    var response = (url, {
-      params: {
+    var response = await rp(url, {
+      qs: {
         loginicon: true,
         uuid: _this.code,
         tip: 0,
@@ -37,25 +38,24 @@ module.exports = class {
     })
     
     var window = {}
-    eval(response.data)
+    eval(response)
     
     switch (window.code) {
       case 200:
-        try{
         var authAddress = window.redirect_uri
         this.baseURL = authAddress.match(/^https:\/\/(.*?)\//)[0]
         this.wxdomain = authAddress.match(/https:\/\/(.*?)\//)[1]
-        var authResponse = await axios.get(authAddress, {
-          params: {
+        var authResponse = await rp(authAddress, {
+          qs: {
             fun: 'new',
             version: 'v2'
           }
         })
         var auth = {
-          skey: authResponse.data.match(/<skey>(.*?)<\/skey>/)[1],
-          passTicket: authResponse.data.match(/<pass_ticket>(.*?)<\/pass_ticket>/)[1],
-          wxsid: authResponse.data.match(/<wxsid>(.*?)<\/wxsid>/)[1],
-          wxuin: authResponse.data.match(/<wxuin>(.*?)<\/wxuin>/)[1]
+          skey: authResponse.match(/<skey>(.*?)<\/skey>/)[1],
+          passTicket: authResponse.match(/<pass_ticket>(.*?)<\/pass_ticket>/)[1],
+          wxsid: authResponse.match(/<wxsid>(.*?)<\/wxsid>/)[1],
+          wxuin: authResponse.match(/<wxuin>(.*?)<\/wxuin>/)[1]
         }
 
         //setting cookies
@@ -63,18 +63,11 @@ module.exports = class {
           {key: 'wxuin', value: auth.wxuin},
           {key: 'wxsid', value: auth.wxsid}
         ])
+        this.cookiejar = rp.jar()
+        this.cookiejar.setCookie(cookie, this.baseURL)
         
-        var cookiejar = new tough.CookieJar()
-       
-        cookiejar.setCookieSync(`wxuin=${auth.wxuin}; wxsid=${auth.wxsid}; domain=${this.wxdomain};`, this.baseURL)
-        
-        axios.defaults.jar = cookiejar
-        axios.defaults.withCredentials = true
         this.auth = auth
         this.initUser()
-        }catch(e){
-          console.log(e)
-        }
         break
       case 201:
         this.avatar = window.userAvatar
@@ -91,28 +84,57 @@ module.exports = class {
   }
   async initUser(){
     console.log('initUser start -------')
-    var response = await axios.post(`${this.baseURL}/cgi-bin/mmwebwx-bin/webwxinit?r=${-new Date()}&pass_ticket=${this.auth.passTicket}`, {
-            BaseRequest: {
+    var url = `${this.baseURL}cgi-bin/mmwebwx-bin/webwxinit?r=${-new Date()}&pass_ticket=${this.auth.passTicket}`
+
+    var response = await rp({
+            uri: url,
+            method: 'POST',
+            jar: this.cookiejar,
+            json: true,
+            body: {
+              BaseRequest: {
                 Sid: this.auth.wxsid,
                 Uin: this.auth.wxuin,
                 Skey: this.auth.skey,
-            }
+              }
+            } 
         });
        
-
-        await axios.post(`${this.baseURL}/cgi-bin/mmwebwx-bin/webwxstatusnotify?lang=en_US&pass_ticket=${this.auth.passTicket}`, {
+      await rp({
+          uri: `${this.baseURL}cgi-bin/mmwebwx-bin/webwxstatusnotify?lang=en_US&pass_ticket=${this.auth.passTicket}`,
+          method: 'POST',
+          jar: this.cookiejar,
+          json: true,
+          body: {
             BaseRequest: {
-                Sid: this.auth.wxsid,
-                Uin: this.auth.wxuin,
-                Skey: this.auth.skey,
+              Sid: this.auth.wxsid,
+              Uin: this.auth.wxuin,
+              Skey: this.auth.skey,
             },
             ClientMsgId: +new Date(),
             Code: 3,
-            FromUserName: response.data.User.UserName,
-            ToUserName: response.data.User.UserName,
-        });
+            FromUserName: response.User.UserName,
+            ToUserName: response.User.UserName,
+          }
+      });
 
-        this.user = response.data;
-        console.log(this.user)
+    //获取好友数据
+    
+    console.log('contact', response.ContactList)
+    this.user = response.User;
+  }
+  async getContactList(){
+    var friendResponse = await rp(`${this.baseURL}cgi-bin/mmwebwx-bin/webwxgetcontact`,{
+      jar: this.cookiejar,
+      qs: {
+        r: Date.now(),
+        seq: 0,
+        skey: this.auth.skey
+      },
+      json: true
+    })
+
+    console.log('friend ==>',friendResponse)
+    return friendResponse
   }
 }

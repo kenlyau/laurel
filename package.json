@@ -27,6 +27,7 @@
     "cookie-parser": "^1.4.3",
     "express": "^4.15.4",
     "morgan": "^1.8.2",
+    "request": "^2.81.0",
     "request-promise": "^4.2.1",
     "tough-cookie": "^2.3.2"
   }
