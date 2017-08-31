@@ -5,9 +5,9 @@ const dashboardCtrl = require('./controllers/dashboard')
 
 router.get('/', startCtrl)
 router.get('/friend', function(req, res){
-  var WBot = require('./services/wechat')
-  var wbot = new WBot
-  var friend = wbot.getContactList()
+  var WeBot = require('./services/wechat')
+  var webot = new WeBot
+  var friend = webot.getContacts()
   res.json(friend)
 })
 router.get('/dashboard', dashboardCtrl.index)
