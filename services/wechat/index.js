@@ -1,4 +1,5 @@
 const axios = require('axios')
+const debug = require('debug')('wechat')
 
 var instance = null
 var getPgv = c => {
@@ -102,12 +103,14 @@ module.exports = class WeBot {
         this.props.wxsid = item.match(/=(.*?);/)[1]
       }
     })
-    console.log('auth response =>',response.headers['set-cookie'])
+    
+    debug('wechat login success!')
 
     this._init()
   }
 
   async _init() {
+    debug('wechat initialize data')
     this._initUser()
     this._heartbeat()
   }
@@ -121,14 +124,16 @@ module.exports = class WeBot {
         Skey: this.props.skey
       }
     })
-    console.log('init user =>', response.data)
+    this.user = response.data.User
+    debug('init user data')
   }
 
   _heartbeat() {
     setInterval(() => {
       var text = '心跳检测：' + new Date().toLocaleString()
       this.sendText(text, 'filehelper')
-    }, 30000)
+    }, 180000)
+    debug('hearbeat check start')
   }
 
   async getContacts(seq = 0) {
@@ -160,7 +165,7 @@ module.exports = class WeBot {
     var clientMsgId = getClientMsgId()
     var response = await axios({
       method: 'POST',
-      url: '',
+      url: url,
       params: {
         'pass_ticket': this.props.passTicket,
         'lang': 'zh_CN'
@@ -175,11 +180,13 @@ module.exports = class WeBot {
         'Msg': {
           'Type': 1,
           'Content': msg,
+          'FromUserName': this.user.UserName,
           'ToUserName': to,
           'LocalID': clientMsgId,
           'ClientMsgId': clientMsgId
         }
       }
     })
+    debug('send text result =>', response.data)
   }
 } 
