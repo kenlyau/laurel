@@ -1,7 +1,8 @@
-const WeBot = require('../services/wechat/')
+const WechatBot = require('../services/wechat/')
+const webot = new WechatBot()
+
 module.exports = async function(req, res) {
-  var webot = new WeBot
-  var code = await webot.getCode()
+  var code = webot.getUUID()
   var img = `https://login.weixin.qq.com/qrcode/${code}`
   res.end(`<!doctype html><html><head></head><body><img src="${img}"></body></html>`)
 }
