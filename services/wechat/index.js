@@ -13,6 +13,18 @@ module.exports = class WechatApi extends WechatCore {
     return this.props.uuid
   }
 
+  getUserByNikeName(nikeName) {
+    this.contacts.filter(user => user.NikeName === nikeName)[0]
+  }
+  
+  getUserNameByNikeName(nikeName) {
+    var user = this.getUserByNikeName(nik)
+    if (!user){
+      return false
+    }
+    return user.UserName
+  }
+
   sendMsgText(to, content) {
     var params = {
       'pass_ticket': this.props.passTicket,
