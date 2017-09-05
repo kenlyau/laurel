@@ -1,13 +1,11 @@
-<div class="container-fulid">
+<div class="container-fluid">
   <div class="row">
     <div class="col-md-4">
       <div class="list-group" id="js-contacts">
         <% for (var i = 0, len = contacts.length; i < len; i++) {%>
-        <a href="javascript:;" class="list-group-item" data-user="<%= contacts[i].UserName %>">
-          <img src="<%= baseURL + contacts[i].HeadImgUrl %>">
-          <span><%= contacts[i].UserName %></span>
+        <div href="javascript:;" class="list-group-item" data-user="<%= contacts[i].NickName %>">
           <p><%= contacts[i].NickName %></p>
-        </a>
+        </div>
         <%}%>
       </div>
     </div>
@@ -52,6 +50,10 @@
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(data)
+    }).then(function(res){
+      return res.json()
+    }).then(function(res){
+      console.log(res)
     })
     
   }, false)

@@ -1,5 +1,7 @@
 const WechatCore = require('./core.js')
 const {getClientMsgId, post} = require('./util')
+const debug = require('debug')('wechat')
+
 var instance = null
 module.exports = class WechatApi extends WechatCore {
   constructor() {
@@ -13,12 +15,12 @@ module.exports = class WechatApi extends WechatCore {
     return this.props.uuid
   }
 
-  getUserByNikeName(nikeName) {
-    this.contacts.filter(user => user.NikeName === nikeName)[0]
+  getUserByNickName(nickName) {
+    return this.contacts.find(user => user.NickName === nickName)
   }
   
-  getUserNameByNikeName(nikeName) {
-    var user = this.getUserByNikeName(nik)
+  getUserNameByNickName(nickName) {
+    var user = this.getUserByNickName(nickName)
     if (!user){
       return false
     }
